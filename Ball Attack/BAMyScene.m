@@ -9,6 +9,12 @@
 #import "BAMyScene.h"
 
 @implementation BAMyScene
+{
+    CGPoint _startPoint;
+    SKSpriteNode *_sprite;
+}
+
+#pragma mark - Lifecycle
 
 -(id)initWithSize:(CGSize)size {    
     if (self = [super initWithSize:size]) {
@@ -16,35 +22,40 @@
         
         self.backgroundColor = [SKColor colorWithRed:0.15 green:0.15 blue:0.3 alpha:1.0];
         
-        SKLabelNode *myLabel = [SKLabelNode labelNodeWithFontNamed:@"Chalkduster"];
+        SKNode *edges = [SKNode node];
+        edges.physicsBody = [SKPhysicsBody bodyWithEdgeLoopFromRect:self.frame];
+        [self addChild:edges];
         
-        myLabel.text = @"Hello, World!";
-        myLabel.fontSize = 30;
-        myLabel.position = CGPointMake(CGRectGetMidX(self.frame),
-                                       CGRectGetMidY(self.frame));
-        
-        [self addChild:myLabel];
+        _sprite = [SKSpriteNode spriteNodeWithImageNamed:@"SoccerBall"];
+        _sprite.position = CGPointMake(size.width * 0.5, size.height * 0.5);
+        _sprite.physicsBody = [SKPhysicsBody bodyWithCircleOfRadius:_sprite.size.width * 0.5];
+        _sprite.physicsBody.affectedByGravity = NO;
+        [self addChild:_sprite];
     }
     return self;
 }
+
+#pragma mark - Touches
 
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     /* Called when a touch begins */
     
     for (UITouch *touch in touches) {
-        CGPoint location = [touch locationInNode:self];
-        
-        SKSpriteNode *sprite = [SKSpriteNode spriteNodeWithImageNamed:@"Spaceship"];
-        
-        sprite.position = location;
-        
-        SKAction *action = [SKAction rotateByAngle:M_PI duration:1];
-        
-        [sprite runAction:[SKAction repeatActionForever:action]];
-        
-        [self addChild:sprite];
+        _startPoint = [touch locationInNode:self];
     }
 }
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    for (UITouch *touch in touches) {
+        CGPoint endPoint = [touch locationInNode:self];
+        CGVector vector = CGVectorMake(endPoint.x - _startPoint.x,
+                                       endPoint.y - _startPoint.y);        
+        _sprite.physicsBody.velocity = vector;
+    }
+}
+
+#pragma mark - Game loop
 
 -(void)update:(CFTimeInterval)currentTime {
     /* Called before each frame is rendered */
